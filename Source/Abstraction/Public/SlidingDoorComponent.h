@@ -4,19 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Math/Vector.h"
 #include "Curves/CurveFloat.h"
-#include "RotatingDoorComponent.generated.h"
+#include "SlidingDoorComponent.generated.h"
 
 class ATriggerBox;
 
-UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ABSTRACTION_API URotatingDoorComponent : public UActorComponent
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class ABSTRACTION_API USlidingDoorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
+public:	
 	// Sets default values for this component's properties
-	URotatingDoorComponent();
+	USlidingDoorComponent();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -28,22 +29,17 @@ protected:
 	APawn* PlayerPawn;
 
 	UPROPERTY(EditAnywhere)
-	FRotator DesiredRotation = FRotator::ZeroRotator;
-	FRotator StartRotation = FRotator::ZeroRotator;
-	FRotator FinalRotation = FRotator::ZeroRotator;
-	FRotator FinalBackRotation = FRotator::ZeroRotator;
-	FRotator usingFinalRotation = FRotator::ZeroRotator;
+	FVector DesiredTranslation = FVector::ZeroVector;
+
+	FVector StartPosition = FVector::ZeroVector;
+	FVector FinalPosition = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere)
-	bool UseBackRotation = false;
-	UPROPERTY(EditAnywhere)
-	float TimeToRotate;
-	float CurrentRotationTime = 0.0f;
+	float TimeToTranslate;
+	float CurrentTranslationTime = 0.0f;
 
 	UPROPERTY(EditAnywhere)
-	ATriggerBox* FrontDoorTrigger;
-	UPROPERTY(EditAnywhere)
-	ATriggerBox* BackDoorTrigger;
+	ATriggerBox* DoorTrigger;
 
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve OpenCurve;

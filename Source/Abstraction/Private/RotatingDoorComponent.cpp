@@ -21,6 +21,7 @@ void URotatingDoorComponent::BeginPlay()
 	Super::BeginPlay();
 
 	Parent = GetOwner();
+	PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 	FinalBackRotation = FinalRotation = StartRotation = Parent->GetActorRotation();
 	FinalRotation += DesiredRotation;
 	FinalBackRotation -= DesiredRotation;
@@ -28,7 +29,6 @@ void URotatingDoorComponent::BeginPlay()
 	CurrentRotationTime = 0.0f;
 	opened = false;
 	closed = true;
-	PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 
 
