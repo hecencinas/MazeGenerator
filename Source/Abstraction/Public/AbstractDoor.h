@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "AbstractDoor.generated.h"
 
+class UInterableDoorComponent;
+class UStaticMeshComponent;
+
 UCLASS()
 class ABSTRACTION_API AAbstractDoor : public AActor
 {
@@ -18,6 +21,11 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* DoorMesh;
+	UPROPERTY(EditAnywhere)
+	UInterableDoorComponent* InterableDoorComponent;
 
 public:	
 	// Called every frame

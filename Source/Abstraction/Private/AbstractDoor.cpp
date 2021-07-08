@@ -2,6 +2,7 @@
 
 
 #include "AbstractDoor.h"
+#include "InterableDoorComponent.h"
 
 // Sets default values
 AAbstractDoor::AAbstractDoor()
@@ -9,6 +10,8 @@ AAbstractDoor::AAbstractDoor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
+	InterableDoorComponent = CreateDefaultSubobject<UInterableDoorComponent>(TEXT("InterableDoorComponent"));
 }
 
 // Called when the game starts or when spawned
