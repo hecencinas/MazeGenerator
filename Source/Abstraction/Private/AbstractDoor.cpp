@@ -2,7 +2,7 @@
 
 
 #include "AbstractDoor.h"
-#include "InterableDoorComponent.h"
+#include "InteractiveDoorComponent.h"
 
 // Sets default values
 AAbstractDoor::AAbstractDoor()
@@ -11,7 +11,7 @@ AAbstractDoor::AAbstractDoor()
 	PrimaryActorTick.bCanEverTick = true;
 
 	DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
-	InterableDoorComponent = CreateDefaultSubobject<UInterableDoorComponent>(TEXT("InterableDoorComponent"));
+	InteractiveDoorComponent = CreateDefaultSubobject<UInteractiveDoorComponent>(TEXT("InteractiveDoorComponent"));
 }
 
 // Called when the game starts or when spawned

@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "AbstractDoor.generated.h"
 
-class UInterableDoorComponent;
+class UInteractiveDoorComponent;
 class UStaticMeshComponent;
 
 UCLASS()
@@ -22,10 +22,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, NoClear)
 	UStaticMeshComponent* DoorMesh;
-	UPROPERTY(EditAnywhere)
-	UInterableDoorComponent* InterableDoorComponent;
+	UPROPERTY(EditAnywhere, NoClear)
+	UInteractiveDoorComponent* InteractiveDoorComponent;
 
 public:	
 	// Called every frame

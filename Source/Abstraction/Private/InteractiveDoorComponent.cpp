@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "InterableDoorComponent.h"
+#include "InteractiveDoorComponent.h"
 #include "Engine/TriggerBox.h"
 
 // Sets default values for this component's properties
-UInterableDoorComponent::UInterableDoorComponent()
+UInteractiveDoorComponent::UInteractiveDoorComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -16,7 +16,7 @@ UInterableDoorComponent::UInterableDoorComponent()
 
 
 // Called when the game starts
-void UInterableDoorComponent::BeginPlay()
+void UInteractiveDoorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -44,7 +44,7 @@ void UInterableDoorComponent::BeginPlay()
 	usingFinalPosition = FinalPosition;
 }
 
-void UInterableDoorComponent::RotateInTime(const float TimeRatio)
+void UInteractiveDoorComponent::RotateInTime(const float TimeRatio)
 {
 	if (rotating)
 	{
@@ -54,7 +54,7 @@ void UInterableDoorComponent::RotateInTime(const float TimeRatio)
 	}
 }
 
-void UInterableDoorComponent::TranslateInTime(const float TimeRatio)
+void UInteractiveDoorComponent::TranslateInTime(const float TimeRatio)
 {
 	if (translating)
 	{
@@ -66,7 +66,7 @@ void UInterableDoorComponent::TranslateInTime(const float TimeRatio)
 
 
 // Called every frame
-void UInterableDoorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UInteractiveDoorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 

@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Curves/CurveFloat.h"
-#include "InterableDoorComponent.generated.h"
+#include "InteractiveDoorComponent.generated.h"
 
 class ATriggerBox;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ABSTRACTION_API UInterableDoorComponent : public UActorComponent
+class ABSTRACTION_API UInteractiveDoorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties
-	UInterableDoorComponent();
+	UInteractiveDoorComponent();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
