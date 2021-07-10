@@ -4,14 +4,25 @@
 #include "InteractiveDoorComponent.h"
 #include "Engine/TriggerBox.h"
 
+#include "DrawDebugHelpers.h"
+
+constexpr float FLT_METERS(float meters) { return meters * 100.0f; }
+
+static TAutoConsoleVariable<bool> CVarToggleDebugDoor
+(
+	TEXT("Abstraction.InteractiveDoorComponent.Debug"),
+	false,
+	TEXT("Toggle InteractiveDoorComponent debug display."),
+	ECVF_Cheat
+);
+
 // Sets default values for this component's properties
 UInteractiveDoorComponent::UInteractiveDoorComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	DoorState = EDoorState::Closed;
+	//CVarToggleDebugDoor.AsVariable()->SetOnChangedCallback(FConsoleVariableDelegate::CreateStatic(&UInteractiveDoorComponent::OnDebugToggled));
 }
 
 
@@ -64,11 +75,11 @@ void UInteractiveDoorComponent::TranslateInTime(const float TimeRatio)
 	}
 }
 
-
 // Called every frame
 void UInteractiveDoorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (!FrontDoorTrigger || !BackDoorTrigger) return;
 
 	const bool frontDoor = FrontDoorTrigger->IsOverlappingActor(PlayerPawn);
 	const bool backDoor = BackDoorTrigger->IsOverlappingActor(PlayerPawn);
@@ -94,6 +105,7 @@ void UInteractiveDoorComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 			opened = TimeRatio == 1.0f;
 			closed = TimeRatio == 0.0f;
+			DoorState = (opened) ? EDoorState::Opened : EDoorState::Opening;
 		}
 	}
 	else if (!closed) //is the door fully closed?
@@ -105,5 +117,13 @@ void UInteractiveDoorComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 		opened = TimeRatio == 1.0f;
 		closed = TimeRatio == 0.0f;
+
+		DoorState = (opened) ? EDoorState::Closed : EDoorState::Closing;
 	}
 }
+
+void UInteractiveDoorComponent::OnDebugToggled(IConsoleVariable* var)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Abstraction.UInteractiveDoorComponent OnDebugToggled"));
+}
+

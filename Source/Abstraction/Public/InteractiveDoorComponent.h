@@ -9,6 +9,16 @@
 
 class ATriggerBox;
 
+UENUM()
+enum class EDoorState
+{
+	Closed = 0	UMETA(DisplayName = "Closed"),
+	Opened = 1	UMETA(DisplayName = "Opened"),
+	Closing = 2	UMETA(DisplayName = "Closing"),
+	Opening = 3	UMETA(DisplayName = "Opening"),
+	Locked = 4	UMETA(DisplayName = "Locked")
+};
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class ABSTRACTION_API UInteractiveDoorComponent : public UActorComponent
 {
@@ -19,6 +29,9 @@ public:
 	UInteractiveDoorComponent();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+
+	void OnDebugToggled(IConsoleVariable* var);
 
 protected:
 	// Called when the game starts
@@ -56,6 +69,8 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 		FRuntimeFloatCurve OpenCurve;
+	UPROPERTY(BlueprintReadOnly)
+		EDoorState DoorState;
 
 	bool rotating = false;
 	bool translating = false;

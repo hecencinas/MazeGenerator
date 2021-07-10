@@ -22,9 +22,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, NoClear)
+	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* DoorMesh;
-	UPROPERTY(EditAnywhere, NoClear)
+	UPROPERTY(EditAnywhere)
 	UInteractiveDoorComponent* InteractiveDoorComponent;
 
 public:	
