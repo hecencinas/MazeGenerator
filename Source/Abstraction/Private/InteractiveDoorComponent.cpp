@@ -3,8 +3,7 @@
 
 #include "InteractiveDoorComponent.h"
 #include "Engine/TriggerBox.h"
-
-#include "DrawDebugHelpers.h"
+#include "ObjectiveComponent.h"
 
 constexpr float FLT_METERS(float meters) { return meters * 100.0f; }
 
@@ -13,7 +12,7 @@ static TAutoConsoleVariable<bool> CVarToggleDebugDoor
 	TEXT("Abstraction.InteractiveDoorComponent.Debug"),
 	false,
 	TEXT("Toggle InteractiveDoorComponent debug display."),
-	ECVF_Cheat
+	ECVF_Default
 );
 
 // Sets default values for this component's properties
@@ -22,7 +21,6 @@ UInteractiveDoorComponent::UInteractiveDoorComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	DoorState = EDoorState::Closed;
-	//CVarToggleDebugDoor.AsVariable()->SetOnChangedCallback(FConsoleVariableDelegate::CreateStatic(&UInteractiveDoorComponent::OnDebugToggled));
 }
 
 
@@ -35,8 +33,6 @@ void UInteractiveDoorComponent::BeginPlay()
 	PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
 
 	CurrentTime = 0.0f;
-	opened = false;
-	closed = true;
 
 	//rotate init
 	rotating = DesiredRotation != FRotator::ZeroRotator;
@@ -85,7 +81,7 @@ void UInteractiveDoorComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	const bool backDoor = BackDoorTrigger->IsOverlappingActor(PlayerPawn);
 	if (frontDoor || backDoor) //is he near the door?
 	{
-		if (closed)
+		if (DoorState == EDoorState::Closed)
 		{
 			//should use reversed rotation?
 			if (backDoor && UseReverseRotation) usingFinalRotation = FinalReverseRotation;
@@ -96,34 +92,33 @@ void UInteractiveDoorComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 			else usingFinalPosition = FinalPosition;
 		}
 
-		if (!opened) //is the door fully open?
+		if (DoorState != EDoorState::Opened) //is the door not fully open?
 		{
 			CurrentTime += DeltaTime;
 			const float TimeRatio = FMath::Clamp((CurrentTime / TimeToOpen), 0.0f, 1.0f);
 			RotateInTime(TimeRatio);
 			TranslateInTime(TimeRatio);
 
-			opened = TimeRatio == 1.0f;
-			closed = TimeRatio == 0.0f;
-			DoorState = (opened) ? EDoorState::Opened : EDoorState::Opening;
+			DoorState = (TimeRatio >= 1.0f) ? EDoorState::Opened : EDoorState::Opening;
+			if (DoorState == EDoorState::Opened) OnDoorOpened();
 		}
 	}
-	else if (!closed) //is the door fully closed?
+	else if (DoorState != EDoorState::Closed) //is the door not fully closed?
 	{
 		CurrentTime -= DeltaTime;
 		const float TimeRatio = FMath::Clamp((CurrentTime / TimeToOpen), 0.0f, 1.0f);
 		RotateInTime(TimeRatio);
 		TranslateInTime(TimeRatio);
 
-		opened = TimeRatio == 1.0f;
-		closed = TimeRatio == 0.0f;
-
-		DoorState = (opened) ? EDoorState::Closed : EDoorState::Closing;
+		DoorState = (TimeRatio <= 0.0f) ? EDoorState::Closed : EDoorState::Closing;
 	}
 }
 
-void UInteractiveDoorComponent::OnDebugToggled(IConsoleVariable* var)
+void UInteractiveDoorComponent::OnDoorOpened()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Abstraction.UInteractiveDoorComponent OnDebugToggled"));
+	UObjectiveComponent* ObjectiveComponent = Parent->FindComponentByClass<UObjectiveComponent>();
+	if (ObjectiveComponent)
+	{
+		ObjectiveComponent->SetObjectiveState(EObjectiveState::Completed);
+	}
 }
-

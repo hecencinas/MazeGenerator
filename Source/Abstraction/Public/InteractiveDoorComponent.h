@@ -30,9 +30,6 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
-	void OnDebugToggled(IConsoleVariable* var);
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -74,9 +71,9 @@ protected:
 
 	bool rotating = false;
 	bool translating = false;
-	bool opened = false;
-	bool closed = true;
 
 	void RotateInTime(float TimeRatio);
 	void TranslateInTime(float TimeRatio);
+
+	void OnDoorOpened();
 };
