@@ -21,6 +21,7 @@ public:
 
 	virtual void FellOutOfWorld(const class UDamageType& dmgTyoe) override;
 
+	UFUNCTION(BlueprintCallable)
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:

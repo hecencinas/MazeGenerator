@@ -18,8 +18,8 @@ public:
 
 	UFUNCTION()
 		virtual void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-		virtual void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBox);
+	UFUNCTION(BlueprintCallable)
+		void SetTrapActive(bool Active);
 
 
 protected:
@@ -30,6 +30,6 @@ protected:
 	float BaseDamage = 50.0f;
 
 	UPROPERTY(EditAnywhere, NoClear)
-	class UCapsuleComponent* TriggerArea;
+	class UBoxComponent* TriggerArea;
 
 };

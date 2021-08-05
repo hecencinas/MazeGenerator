@@ -27,8 +27,6 @@ void RecursiveDivisionMaze::GenerateMaze(std::mt19937& RandomInt, const Point& O
 	int WallIdx = (HorizontalCut) ? RandomInt() % (UsingHeight - 1) : RandomInt() % (UsingWidth - 1);
 	int DoorIdx = (HorizontalCut) ? RandomInt() % UsingWidth : RandomInt() % UsingHeight;
 
-	UE_LOG(LogTemp, Warning, TEXT("HorizontalCut=%d; WallIdx=%d; DoorIdx=%d"), HorizontalCut, WallIdx, DoorIdx);
-
 	if (HorizontalCut)
 	{
 		DisconnectRow(Origin, WallIdx, UsingWidth, DoorIdx);

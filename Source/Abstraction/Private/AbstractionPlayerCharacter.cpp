@@ -6,7 +6,7 @@
 // Sets default values
 AAbstractionPlayerCharacter::AAbstractionPlayerCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
@@ -16,7 +16,7 @@ AAbstractionPlayerCharacter::AAbstractionPlayerCharacter()
 void AAbstractionPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
@@ -40,7 +40,18 @@ void AAbstractionPlayerCharacter::FellOutOfWorld(const class UDamageType& dmgTyo
 
 float AAbstractionPlayerCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float DamageRes = Super::TakeDamage(Damage, DamageEvent,  EventInstigator, DamageCauser);
+	float DamageRes;
+	if (&DamageEvent == nullptr)
+	{
+		TSubclassOf<UDamageType> const ValidDamageClassType = TSubclassOf<UDamageType>(UDamageType::StaticClass());
+		FDamageEvent DamageEvent2(ValidDamageClassType);
+		DamageRes = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	}
+	else
+	{
+		DamageRes = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("AAbstractionPlayerCharacter::TakeDamage %.2f"), DamageRes);
 	if (HealthComponent)
 	{

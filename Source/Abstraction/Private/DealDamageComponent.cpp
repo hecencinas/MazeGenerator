@@ -3,7 +3,7 @@
 
 #include "DealDamageComponent.h"
 #include "AbstractionPlayerCharacter.h"
-#include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values for this component's properties
 UDealDamageComponent::UDealDamageComponent()
@@ -12,7 +12,7 @@ UDealDamageComponent::UDealDamageComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	TriggerArea = CreateDefaultSubobject<UCapsuleComponent>(TEXT("TriggerArea"));
+	TriggerArea = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerArea"));
 }
 
 
@@ -20,9 +20,6 @@ UDealDamageComponent::UDealDamageComponent()
 void UDealDamageComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	TriggerArea->OnComponentBeginOverlap.AddDynamic(this, &UDealDamageComponent::OnOverlapBegin);
-	TriggerArea->OnComponentEndOverlap.AddDynamic(this, &UDealDamageComponent::OnOverlapEnd);
 
 }
 
@@ -40,7 +37,32 @@ void UDealDamageComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedCompone
 	}
 }
 
-void UDealDamageComponent::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBox)
+void UDealDamageComponent::SetTrapActive(bool Active)
 {
+	if (Active)
+	{
+		TriggerArea->OnComponentBeginOverlap.AddDynamic(this, &UDealDamageComponent::OnOverlapBegin);
 
+		TArray<AActor*> OverlappingActors;
+		TriggerArea->GetOverlappingActors(OverlappingActors);
+		if (OverlappingActors.Num() > 0)
+		{
+			int idx = OverlappingActors.Find(GetWorld()->GetFirstPlayerController()->GetPawn());
+			if (idx != INDEX_NONE)
+			{
+				AAbstractionPlayerCharacter* PlayerCharacter = Cast<AAbstractionPlayerCharacter>(OverlappingActors[idx]);
+				if (PlayerCharacter)
+				{
+					TSubclassOf<UDamageType> const ValidDamageClassType = TSubclassOf<UDamageType>(UDamageType::StaticClass());
+					FDamageEvent DamageEvent(ValidDamageClassType);
+
+					PlayerCharacter->TakeDamage(BaseDamage, DamageEvent, nullptr, GetOwner());
+				}
+			}
+		}
+	}
+	else
+	{
+		TriggerArea->OnComponentBeginOverlap.RemoveDynamic(this, &UDealDamageComponent::OnOverlapBegin);
+	}
 }

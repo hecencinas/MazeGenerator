@@ -32,6 +32,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void InstantiateMaze();
 
 	RecursiveDivisionMaze* MazeGrid;
 
@@ -39,11 +40,11 @@ protected:
 	class USceneComponent* RootSceneComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Generator")
-	class UStaticMesh* FloorMeshTemplate;
+	TMap<TSubclassOf<AActor>, int> FloorMeshTemplatesAndChance;
 	UPROPERTY(EditAnywhere, Category = "Generator")
-	class UStaticMesh* WallMeshTemplate;
+	TMap<TSubclassOf<AActor>, int> WallMeshTemplatesAndChance;
 	UPROPERTY(EditAnywhere, Category = "Generator")
-	class UStaticMesh* DoorFramedWallMeshTemplate;
+	TMap<TSubclassOf<AActor>, int> DoorFramedWallMeshTemplatesAndChance;
 
 	std::vector<std::vector<AActor*>> FloorMeshes;
 	std::vector<std::vector<AActor*>> WallMeshes;

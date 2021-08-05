@@ -31,9 +31,9 @@ void AMazeActor::Tick(float DeltaTime)
 
 void AMazeActor::GenerateMaze()
 {
-	if (FloorMeshTemplate == nullptr || WallMeshTemplate == nullptr || DoorFramedWallMeshTemplate == nullptr)
+	if (FloorMeshTemplatesAndChance.Num() == 0 || WallMeshTemplatesAndChance.Num() == 0 || DoorFramedWallMeshTemplatesAndChance.Num() == 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Templates static meshes required."));
+		UE_LOG(LogTemp, Error, TEXT("Templates required."));
 		return;
 	}
 	if (Width < 1 || Height < 1)
@@ -42,20 +42,24 @@ void AMazeActor::GenerateMaze()
 		return;
 	}
 
-
-	if (MazeGrid != nullptr) {} //todo: reset maze, destroy old objects or reuse then
 	MazeGrid = new RecursiveDivisionMaze(Width, Height);
 
 	if (FloorMeshes.size() > 0) for (std::vector<AActor*> FloorRow : FloorMeshes) for (AActor* MeshActor : FloorRow) if (MeshActor) MeshActor->Destroy();
 	if (WallMeshes.size() > 0) for (std::vector<AActor*> WallRow : WallMeshes) for (AActor* MeshActor : WallRow) if (MeshActor) MeshActor->Destroy();
-
 	FloorMeshes.clear();
-	FloorMeshes.resize(Width);
 	WallMeshes.clear();
+
+	InstantiateMaze();
+}
+
+void AMazeActor::InstantiateMaze()
+{
+	FloorMeshes.resize(Width);
 	WallMeshes.resize(Width);
 
 
 	FVector NextCellCenter = FVector::ZeroVector;
+	float BeginX = NextCellCenter.X; //begin column
 
 	FVector FrontWallPos = NextCellCenter;
 	FrontWallPos.Y += CellSize / 2;
@@ -65,7 +69,29 @@ void AMazeActor::GenerateMaze()
 	FRotator LeftWallRot = FRotator::ZeroRotator;
 	LeftWallRot.Yaw += 90;
 
-	float BeginX = NextCellCenter.X;
+	srand(time(NULL));
+	TArray<TSubclassOf<AActor>> FloorTemplates;
+	FloorMeshTemplatesAndChance.GenerateKeyArray(FloorTemplates);
+	TArray<TSubclassOf<AActor>> WallTemplates;
+	WallMeshTemplatesAndChance.GenerateKeyArray(WallTemplates);
+	TArray<TSubclassOf<AActor>> DoorTemplates;
+	DoorFramedWallMeshTemplatesAndChance.GenerateKeyArray(DoorTemplates);
+
+	TArray<int> FloorChances;
+	DoorFramedWallMeshTemplatesAndChance.GenerateValueArray(FloorChances);
+	TArray<int> WallChances;
+	WallMeshTemplatesAndChance.GenerateValueArray(WallChances);
+	TArray<int> DoorChances;
+	DoorFramedWallMeshTemplatesAndChance.GenerateValueArray(DoorChances);
+
+	int FloorIdx = 0;
+	int WallIdx = 0;
+	int DoorFrameIdx = 0;
+	//enforcing first templates to be default, in case all the other template reach 0 it'll be a safe point
+	FloorChances[0] = -1;
+	WallChances[0] = -1;
+	DoorChances[0] = -1;
+
 
 	for (int x = 0; x < Width; ++x, NextCellCenter.Y += CellSize)
 	{
@@ -77,61 +103,71 @@ void AMazeActor::GenerateMaze()
 		NextCellCenter.X = BeginX; //begin column
 		for (int y = 0; y < Height; ++y, NextCellCenter.X += CellSize)
 		{
-			AStaticMeshActor* NewFloorMesh = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), NextCellCenter, FRotator::ZeroRotator);
-			FloorMeshes[x].push_back(NewFloorMesh);
-			NewFloorMesh->SetMobility(EComponentMobility::Stationary);
-			UStaticMeshComponent* MeshComponent = NewFloorMesh->GetStaticMeshComponent();
-			if (MeshComponent) MeshComponent->SetStaticMesh(FloorMeshTemplate);
+			FloorIdx = rand() % FloorMeshTemplatesAndChance.Num();
+			while (FloorChances[FloorIdx] == 0) FloorIdx = rand() % FloorMeshTemplatesAndChance.Num();
 
-			//determine front wall template
-			auto UsingWallTemplate = DoorFramedWallMeshTemplate;
-			if (x == Width - 1) UsingWallTemplate = WallMeshTemplate;
-			else if (!MazeGrid->AreConnected(MazeGrid->GridCells[x][y], MazeGrid->GridCells[x + 1][y])) UsingWallTemplate = WallMeshTemplate;
+			WallIdx = rand() % WallMeshTemplatesAndChance.Num();
+			while (WallChances[WallIdx] == 0) WallIdx = rand() % WallMeshTemplatesAndChance.Num();
 
+			DoorFrameIdx = rand() % DoorFramedWallMeshTemplatesAndChance.Num();
+			while (DoorChances[DoorFrameIdx] == 0) DoorFrameIdx = rand() % DoorFramedWallMeshTemplatesAndChance.Num();
+
+			UE_LOG(LogTemp, Warning, TEXT("FloorIdx=%d; WallIdx=%d; DoorFrameIdx=%d"), FloorIdx, WallIdx, DoorFrameIdx);
+
+			FloorMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(FloorTemplates[FloorIdx], NextCellCenter, FRotator::ZeroRotator));
+			FloorChances[FloorIdx]--;
+
+			//front wall
 			FrontWallPos = NextCellCenter;
 			FrontWallPos.Y += CellSize / 2;
-			AStaticMeshActor* NewFrontWallMesh = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FrontWallPos, FRotator::ZeroRotator);
-			WallMeshes[x].push_back(NewFrontWallMesh);
-			NewFrontWallMesh->SetMobility(EComponentMobility::Stationary);
-			UStaticMeshComponent* FrontWallMeshComponent = NewFrontWallMesh->GetStaticMeshComponent();
-			if (FrontWallMeshComponent) FrontWallMeshComponent->SetStaticMesh(UsingWallTemplate);
+			if (x == Width - 1 || !MazeGrid->AreConnected(MazeGrid->GridCells[x][y], MazeGrid->GridCells[x + 1][y]))
+			{
+				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], FrontWallPos, FRotator::ZeroRotator));
+				WallChances[WallIdx]--;
+			}
+			else
+			{
+				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(DoorTemplates[DoorFrameIdx], FrontWallPos, FRotator::ZeroRotator));
+				DoorChances[DoorFrameIdx]--;
+			}
 
-			//determine front wall template
-			UsingWallTemplate = DoorFramedWallMeshTemplate;
-			if (y == Height - 1) UsingWallTemplate = WallMeshTemplate;
-			else if (!MazeGrid->AreConnected(MazeGrid->GridCells[x][y], MazeGrid->GridCells[x][y + 1])) UsingWallTemplate = WallMeshTemplate;
-
+			//left wall
 			LeftWallPos = NextCellCenter;
 			LeftWallPos.X += CellSize / 2;
-			AStaticMeshActor* NewLeftWallMesh = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), LeftWallPos, LeftWallRot);
-			WallMeshes[x].push_back(NewLeftWallMesh);
-			NewLeftWallMesh->SetMobility(EComponentMobility::Stationary);
-			UStaticMeshComponent* LeftWallMeshComponent = NewLeftWallMesh->GetStaticMeshComponent();
-			if (LeftWallMeshComponent) LeftWallMeshComponent->SetStaticMesh(UsingWallTemplate);
+			if (y == Height - 1 || !MazeGrid->AreConnected(MazeGrid->GridCells[x][y], MazeGrid->GridCells[x][y + 1]))
+			{
+				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], LeftWallPos, LeftWallRot));
+				WallChances[WallIdx]--;
+			}
+			else
+			{
+				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(DoorTemplates[DoorFrameIdx], LeftWallPos, LeftWallRot));
+				DoorChances[DoorFrameIdx]--;
+			}
 		}
 	}
 
 	NextCellCenter = FVector::ZeroVector;
 	for (int x = 0; x < Height; ++x, NextCellCenter.X += CellSize)
 	{
+		WallIdx = rand() % WallMeshTemplatesAndChance.Num();
+		while (WallChances[WallIdx] == 0) WallIdx = rand() % WallMeshTemplatesAndChance.Num();
+		WallChances[WallIdx]--;
+
 		auto BackWallPos = NextCellCenter;
 		BackWallPos.Y -= CellSize / 2;
-		AStaticMeshActor* NewFrontWallMesh = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), BackWallPos, FRotator::ZeroRotator);
-		WallMeshes[0].push_back(NewFrontWallMesh);
-		NewFrontWallMesh->SetMobility(EComponentMobility::Stationary);
-		UStaticMeshComponent* FrontWallMeshComponent = NewFrontWallMesh->GetStaticMeshComponent();
-		if (FrontWallMeshComponent) FrontWallMeshComponent->SetStaticMesh(WallMeshTemplate);
+		WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], BackWallPos, FRotator::ZeroRotator));
 	}
 
 	NextCellCenter = FVector::ZeroVector;
 	for (int y = 0; y < Width; ++y, NextCellCenter.Y += CellSize)
 	{
+		WallIdx = rand() % WallMeshTemplatesAndChance.Num();
+		while (WallChances[WallIdx] == 0) WallIdx = rand() % WallMeshTemplatesAndChance.Num();
+		WallChances[WallIdx]--;
+
 		auto RightWallPos = NextCellCenter;
 		RightWallPos.X -= CellSize / 2;
-		AStaticMeshActor* NewLeftWallMesh = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), RightWallPos, LeftWallRot);
-		WallMeshes[y].push_back(NewLeftWallMesh);
-		NewLeftWallMesh->SetMobility(EComponentMobility::Stationary);
-		UStaticMeshComponent* LeftWallMeshComponent = NewLeftWallMesh->GetStaticMeshComponent();
-		if (LeftWallMeshComponent) LeftWallMeshComponent->SetStaticMesh(WallMeshTemplate);
+		WallMeshes[y].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], RightWallPos, LeftWallRot));
 	}
 }
