@@ -19,12 +19,18 @@ public:
 	void TakeDamage(float Damage) { CurrentHealth -= Damage; }
 	bool IsDead() { return CurrentHealth <= FLT_EPSILON; }
 
+	UFUNCTION(BlueprintCallable)
+	float GetCurrentHealth() { return CurrentHealth; }
+	
+	UFUNCTION(BlueprintCallable)
+	float GetMaxHealth() { return MaxHealth; }
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere)
-		float MaxHealth = 100.0f;
+	float MaxHealth = 100.0f;
 
 	float CurrentHealth = 0.0f;
 };

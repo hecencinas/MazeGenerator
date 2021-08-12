@@ -78,7 +78,7 @@ void AMazeActor::InstantiateMaze()
 	DoorFramedWallMeshTemplatesAndChance.GenerateKeyArray(DoorTemplates);
 
 	TArray<int> FloorChances;
-	DoorFramedWallMeshTemplatesAndChance.GenerateValueArray(FloorChances);
+	FloorMeshTemplatesAndChance.GenerateValueArray(FloorChances);
 	TArray<int> WallChances;
 	WallMeshTemplatesAndChance.GenerateValueArray(WallChances);
 	TArray<int> DoorChances;
@@ -112,9 +112,8 @@ void AMazeActor::InstantiateMaze()
 			DoorFrameIdx = rand() % DoorFramedWallMeshTemplatesAndChance.Num();
 			while (DoorChances[DoorFrameIdx] == 0) DoorFrameIdx = rand() % DoorFramedWallMeshTemplatesAndChance.Num();
 
-			UE_LOG(LogTemp, Warning, TEXT("FloorIdx=%d; WallIdx=%d; DoorFrameIdx=%d"), FloorIdx, WallIdx, DoorFrameIdx);
-
-			FloorMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(FloorTemplates[FloorIdx], NextCellCenter, FRotator::ZeroRotator));
+			auto RandRot = GetRand4OrientationRotator();
+			FloorMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(FloorTemplates[FloorIdx], NextCellCenter, RandRot));
 			FloorChances[FloorIdx]--;
 
 			//front wall
@@ -170,4 +169,29 @@ void AMazeActor::InstantiateMaze()
 		RightWallPos.X -= CellSize / 2;
 		WallMeshes[y].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], RightWallPos, LeftWallRot));
 	}
+}
+
+
+FRotator AMazeActor::GetRand4OrientationRotator()
+{
+	FRotator RandRot = FRotator::ZeroRotator;
+
+	int OrientationRand = rand() % 4;
+
+	switch (OrientationRand)
+	{
+	/*case 0:
+		RandRot.Yaw += 0;
+		break;*/
+	case 1:
+		RandRot.Yaw += 90;
+		break;
+	case 2:
+		RandRot.Yaw += 180;
+		break;
+	case 3:
+		RandRot.Yaw += 270;
+		break;
+	}
+	return RandRot;
 }

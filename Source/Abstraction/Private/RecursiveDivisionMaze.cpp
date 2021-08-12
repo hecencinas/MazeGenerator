@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include <random>
 #include "RecursiveDivisionMaze.h"
+#include <random>
 
 void RecursiveDivisionMaze::Init(int width, int height, bool isConneccted)
 {

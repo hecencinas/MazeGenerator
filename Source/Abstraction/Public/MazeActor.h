@@ -48,4 +48,7 @@ protected:
 
 	std::vector<std::vector<AActor*>> FloorMeshes;
 	std::vector<std::vector<AActor*>> WallMeshes;
+
+	FRotator GetRand4OrientationRotator();
+
 };

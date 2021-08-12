@@ -24,13 +24,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	UPROPERTY(EditAnywhere)
+	UHealthComponent* HealthComponent;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void OnDeath(bool IsFellOut);
 
-	UPROPERTY(EditAnywhere)
-	UHealthComponent* HealthComponent;
-	
 };

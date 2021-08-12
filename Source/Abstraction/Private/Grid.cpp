@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include <algorithm>
 #include "Grid.h"
+#include <algorithm>
 
 void Grid::Init(int width, int height, bool isConneccted)
 {

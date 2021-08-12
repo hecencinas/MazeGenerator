@@ -1,29 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "DealDamageComponent.h"
+#include "DoDamageComponent.h"
 #include "AbstractionPlayerCharacter.h"
-#include "Components/BoxComponent.h"
 
-// Sets default values for this component's properties
-UDealDamageComponent::UDealDamageComponent()
+UDoDamageComponent::UDoDamageComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
-	TriggerArea = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerArea"));
 }
 
-
-// Called when the game starts
-void UDealDamageComponent::BeginPlay()
+void UDoDamageComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	SetTrapActive(true);
 }
 
-void UDealDamageComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UDoDamageComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == GetOwner()) return;
 
@@ -37,14 +29,14 @@ void UDealDamageComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedCompone
 	}
 }
 
-void UDealDamageComponent::SetTrapActive(bool Active)
+void UDoDamageComponent::SetTrapActive(bool Active)
 {
 	if (Active)
 	{
-		TriggerArea->OnComponentBeginOverlap.AddDynamic(this, &UDealDamageComponent::OnOverlapBegin);
+		OnComponentBeginOverlap.AddDynamic(this, &UDoDamageComponent::OnOverlapBegin);
 
 		TArray<AActor*> OverlappingActors;
-		TriggerArea->GetOverlappingActors(OverlappingActors);
+		GetOverlappingActors(OverlappingActors);
 		if (OverlappingActors.Num() > 0)
 		{
 			int idx = OverlappingActors.Find(GetWorld()->GetFirstPlayerController()->GetPawn());
@@ -63,6 +55,7 @@ void UDealDamageComponent::SetTrapActive(bool Active)
 	}
 	else
 	{
-		TriggerArea->OnComponentBeginOverlap.RemoveDynamic(this, &UDealDamageComponent::OnOverlapBegin);
+		OnComponentBeginOverlap.RemoveDynamic(this, &UDoDamageComponent::OnOverlapBegin);
 	}
 }
+
