@@ -16,7 +16,7 @@ public:
 	// Sets default values for this component's properties
 	UHealthComponent();
 
-	void TakeDamage(float Damage) { CurrentHealth -= Damage; }
+	void TakeDamage(float Damage);
 	bool IsDead() { return CurrentHealth <= FLT_EPSILON; }
 
 	UFUNCTION(BlueprintCallable)
@@ -33,4 +33,11 @@ protected:
 	float MaxHealth = 100.0f;
 
 	float CurrentHealth = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> HealthWidgetClass;
+
+	UUserWidget* HealthWidget = nullptr;
+
+	void CallWidgetUpdateHealth();
 };

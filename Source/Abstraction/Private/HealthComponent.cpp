@@ -2,6 +2,9 @@
 
 
 #include "HealthComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+#include "Misc/OutputDeviceNull.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -16,5 +19,34 @@ void UHealthComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHealth = MaxHealth;
+
+	if (HealthWidgetClass)
+	{
+		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		HealthWidget = CreateWidget<UUserWidget>(PlayerController, HealthWidgetClass);
+		HealthWidget->AddToViewport();
+
+		CallWidgetUpdateHealth();
+	}
 }
 
+void UHealthComponent::TakeDamage(float Damage)
+{
+	CurrentHealth -= Damage;
+	CallWidgetUpdateHealth();
+}
+
+void UHealthComponent::CallWidgetUpdateHealth()
+{
+	if (HealthWidgetClass)
+	{
+		try
+		{
+			FOutputDeviceNull OutputDeviceNull;
+
+			const FString CmdAndParams = FString::Printf(TEXT("UpdateHealth %.2f %.2f"), CurrentHealth, MaxHealth); //update health
+			HealthWidget->CallFunctionByNameWithArguments(*CmdAndParams, OutputDeviceNull, nullptr, true);
+		}
+		catch (...) {}
+	}
+}

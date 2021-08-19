@@ -2,7 +2,6 @@
 
 
 #include "AbstractionGameModeBase.h"
-#include "Kismet/GameplayStatics.h"
 #include "ObjectiveWorldSubsystem.h"
 
 void AAbstractionGameModeBase::StartPlay()
@@ -15,8 +14,4 @@ void AAbstractionGameModeBase::StartPlay()
 		ObjectiveWorldSubsystem->CreateObjectiveWidget(ObjectiveWidgetClass);
 		ObjectiveWorldSubsystem->DisplayObjectiveWidget();
 	}
-
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	HealthWidget = CreateWidget<UUserWidget>(PlayerController, HealthWidgetClass);
-	HealthWidget->AddToViewport();
 }

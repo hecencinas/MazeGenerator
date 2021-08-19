@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameMode.h"
 #include "Blueprint/UserWidget.h"
 #include "AbstractionGameModeBase.generated.h"
 
@@ -11,7 +12,7 @@
  * 
  */
 UCLASS()
-class ABSTRACTION_API AAbstractionGameModeBase : public AGameModeBase
+class ABSTRACTION_API AAbstractionGameModeBase : public AGameMode
 {
 	GENERATED_BODY()
 
@@ -20,11 +21,4 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ObjectiveWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<UUserWidget> HealthWidgetClass;
-	
-private:
-	UUserWidget* HealthWidget = nullptr;
-
 };

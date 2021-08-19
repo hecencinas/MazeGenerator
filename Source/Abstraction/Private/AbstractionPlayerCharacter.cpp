@@ -65,4 +65,5 @@ void AAbstractionPlayerCharacter::OnDeath(bool IsFellOut)
 {
 	APlayerController* PlayerController = GetController<APlayerController>();
 	if (PlayerController) PlayerController->RestartLevel();
+	else Destroy();
 }

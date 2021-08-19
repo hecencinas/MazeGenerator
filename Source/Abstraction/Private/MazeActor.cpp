@@ -19,7 +19,11 @@ void AMazeActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (MazeGrid == nullptr) GenerateMaze();
+	if (MazeGrid == nullptr || FloorMeshes.size() <= 0 || WallMeshes.size() <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Generating maze at begin play."));
+		GenerateMaze();
+	}
 }
 
 // Called every frame
@@ -31,18 +35,18 @@ void AMazeActor::Tick(float DeltaTime)
 
 void AMazeActor::GenerateMaze()
 {
-	if (FloorMeshTemplatesAndChance.Num() == 0 || WallMeshTemplatesAndChance.Num() == 0 || DoorFramedWallMeshTemplatesAndChance.Num() == 0)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Templates required."));
-		return;
-	}
 	if (Width < 1 || Height < 1)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Width and Height should be greater than 0."));
 		return;
 	}
-
 	MazeGrid = new RecursiveDivisionMaze(Width, Height);
+
+	if (FloorMeshTemplatesAndChance.Num() == 0 || WallMeshTemplatesAndChance.Num() == 0 || DoorFramedWallMeshTemplatesAndChance.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Templates required."));
+		return;
+	}
 
 	if (FloorMeshes.size() > 0) for (std::vector<AActor*> FloorRow : FloorMeshes) for (AActor* MeshActor : FloorRow) if (MeshActor) MeshActor->Destroy();
 	if (WallMeshes.size() > 0) for (std::vector<AActor*> WallRow : WallMeshes) for (AActor* MeshActor : WallRow) if (MeshActor) MeshActor->Destroy();
