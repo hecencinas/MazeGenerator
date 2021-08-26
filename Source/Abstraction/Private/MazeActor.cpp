@@ -3,6 +3,7 @@
 
 #include "MazeActor.h"
 #include "Engine/StaticMeshActor.h"
+#include "Random.h"
 
 // Sets default values
 AMazeActor::AMazeActor()
@@ -19,7 +20,7 @@ void AMazeActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (MazeGrid == nullptr || FloorMeshes.size() <= 0 || WallMeshes.size() <= 0)
+	if (MazeGrid == nullptr && FloorMeshes.Num() <= 0 && WallMeshes.Num() <= 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Generating maze at begin play."));
 		GenerateMaze();
@@ -35,35 +36,25 @@ void AMazeActor::Tick(float DeltaTime)
 
 void AMazeActor::GenerateMaze()
 {
-	if (Width < 1 || Height < 1)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Width and Height should be greater than 0."));
-		return;
-	}
 	MazeGrid = new RecursiveDivisionMaze(Width, Height);
 
-	if (FloorMeshTemplatesAndChance.Num() == 0 || WallMeshTemplatesAndChance.Num() == 0 || DoorFramedWallMeshTemplatesAndChance.Num() == 0)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Templates required."));
-		return;
-	}
+	if (FloorMeshes.Num() > 0) for (TArray<AActor*> FloorRow : FloorMeshes) for (AActor* MeshActor : FloorRow) if (MeshActor) MeshActor->Destroy();
+	if (WallMeshes.Num() > 0) for (TArray<AActor*> WallRow : WallMeshes) for (AActor* MeshActor : WallRow) if (MeshActor) MeshActor->Destroy();
+	FloorMeshes.Empty(Width);
+	WallMeshes.Empty(Width);
+	UniqueSpawned.Empty();
 
-	if (FloorMeshes.size() > 0) for (std::vector<AActor*> FloorRow : FloorMeshes) for (AActor* MeshActor : FloorRow) if (MeshActor) MeshActor->Destroy();
-	if (WallMeshes.size() > 0) for (std::vector<AActor*> WallRow : WallMeshes) for (AActor* MeshActor : WallRow) if (MeshActor) MeshActor->Destroy();
-	FloorMeshes.clear();
-	WallMeshes.clear();
+	GetDatableTemplatesAndRarity(FloorTemplatesAndRarity, FloorTemplates);
+	GetDatableTemplatesAndRarity(WallTemplatesAndRarity, WallTemplates);
+	GetDatableTemplatesAndRarity(DoorTemplatesAndRarity, DoorTemplates);
 
 	InstantiateMaze();
 }
 
 void AMazeActor::InstantiateMaze()
 {
-	FloorMeshes.resize(Width);
-	WallMeshes.resize(Width);
-
-
-	FVector NextCellCenter = FVector::ZeroVector;
-	float BeginX = NextCellCenter.X; //begin column
+	FVector NextCellCenter = GetActorLocation();
+	float BeginX = NextCellCenter.X; //begin collumn
 
 	FVector FrontWallPos = NextCellCenter;
 	FrontWallPos.Y += CellSize / 2;
@@ -73,65 +64,36 @@ void AMazeActor::InstantiateMaze()
 	FRotator LeftWallRot = FRotator::ZeroRotator;
 	LeftWallRot.Yaw += 90;
 
-	srand(time(NULL));
-	TArray<TSubclassOf<AActor>> FloorTemplates;
-	FloorMeshTemplatesAndChance.GenerateKeyArray(FloorTemplates);
-	TArray<TSubclassOf<AActor>> WallTemplates;
-	WallMeshTemplatesAndChance.GenerateKeyArray(WallTemplates);
-	TArray<TSubclassOf<AActor>> DoorTemplates;
-	DoorFramedWallMeshTemplatesAndChance.GenerateKeyArray(DoorTemplates);
-
-	TArray<int> FloorChances;
-	FloorMeshTemplatesAndChance.GenerateValueArray(FloorChances);
-	TArray<int> WallChances;
-	WallMeshTemplatesAndChance.GenerateValueArray(WallChances);
-	TArray<int> DoorChances;
-	DoorFramedWallMeshTemplatesAndChance.GenerateValueArray(DoorChances);
-
-	int FloorIdx = 0;
-	int WallIdx = 0;
-	int DoorFrameIdx = 0;
-	//enforcing first templates to be default, in case all the other template reach 0 it'll be a safe point
-	FloorChances[0] = -1;
-	WallChances[0] = -1;
-	DoorChances[0] = -1;
-
+	int FloorTemplateIdx = 0;
+	int WallTemplateIdx = 0;
+	int DoorTemplateIdx = 0;
 
 	for (int x = 0; x < Width; ++x, NextCellCenter.Y += CellSize)
 	{
-		FloorMeshes[x].resize(Height);
-
-		if (x == 0) WallMeshes[x].resize(Height * 2 + Width + 1);
-		else WallMeshes[x].resize(Height * 2 + 1);
-
+		FloorMeshes.Add(TArray<AActor*>());
+		WallMeshes.Add(TArray<AActor*>());
 		NextCellCenter.X = BeginX; //begin column
+
 		for (int y = 0; y < Height; ++y, NextCellCenter.X += CellSize)
 		{
-			FloorIdx = rand() % FloorMeshTemplatesAndChance.Num();
-			while (FloorChances[FloorIdx] == 0) FloorIdx = rand() % FloorMeshTemplatesAndChance.Num();
+			FloorTemplateIdx = GetRandomTemplateIndex(FloorTemplates);
+			FRotator RandRot = GetRand4OrientationRotator();
+			FloorMeshes[x].Add(GetWorld()->SpawnActor<AActor>(FloorTemplates[FloorTemplateIdx].ActorClass, NextCellCenter, RandRot));
 
-			WallIdx = rand() % WallMeshTemplatesAndChance.Num();
-			while (WallChances[WallIdx] == 0) WallIdx = rand() % WallMeshTemplatesAndChance.Num();
+			WallTemplateIdx = GetRandomTemplateIndex(WallTemplates);
 
-			DoorFrameIdx = rand() % DoorFramedWallMeshTemplatesAndChance.Num();
-			while (DoorChances[DoorFrameIdx] == 0) DoorFrameIdx = rand() % DoorFramedWallMeshTemplatesAndChance.Num();
-
-			auto RandRot = GetRand4OrientationRotator();
-			FloorMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(FloorTemplates[FloorIdx], NextCellCenter, RandRot));
-			FloorChances[FloorIdx]--;
+			DoorTemplateIdx = GetRandomTemplateIndex(DoorTemplates);
 
 			//front wall
 			FrontWallPos = NextCellCenter;
 			FrontWallPos.Y += CellSize / 2;
 			if (x == Width - 1 || !MazeGrid->AreConnected(MazeGrid->GridCells[x][y], MazeGrid->GridCells[x + 1][y]))
 			{
-				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], FrontWallPos, FRotator::ZeroRotator));
-				WallChances[WallIdx]--;
+				WallMeshes[x].Add(GetWorld()->SpawnActor<AActor>(WallTemplates[WallTemplateIdx].ActorClass, FrontWallPos, FRotator::ZeroRotator));
 			}
 			else
 			{
-				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(DoorTemplates[DoorFrameIdx], FrontWallPos, FRotator::ZeroRotator));
-				DoorChances[DoorFrameIdx]--;
+				WallMeshes[x].Add(GetWorld()->SpawnActor<AActor>(DoorTemplates[DoorTemplateIdx].ActorClass, FrontWallPos, FRotator::ZeroRotator));
 			}
 
 			//left wall
@@ -139,54 +101,47 @@ void AMazeActor::InstantiateMaze()
 			LeftWallPos.X += CellSize / 2;
 			if (y == Height - 1 || !MazeGrid->AreConnected(MazeGrid->GridCells[x][y], MazeGrid->GridCells[x][y + 1]))
 			{
-				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], LeftWallPos, LeftWallRot));
-				WallChances[WallIdx]--;
+				WallMeshes[x].Add(GetWorld()->SpawnActor<AActor>(WallTemplates[WallTemplateIdx].ActorClass, LeftWallPos, LeftWallRot));
 			}
 			else
 			{
-				WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(DoorTemplates[DoorFrameIdx], LeftWallPos, LeftWallRot));
-				DoorChances[DoorFrameIdx]--;
+				WallMeshes[x].Add(GetWorld()->SpawnActor<AActor>(DoorTemplates[DoorTemplateIdx].ActorClass, LeftWallPos, LeftWallRot));
 			}
 		}
 	}
 
-	NextCellCenter = FVector::ZeroVector;
+	NextCellCenter = GetActorLocation();
 	for (int x = 0; x < Height; ++x, NextCellCenter.X += CellSize)
 	{
-		WallIdx = rand() % WallMeshTemplatesAndChance.Num();
-		while (WallChances[WallIdx] == 0) WallIdx = rand() % WallMeshTemplatesAndChance.Num();
-		WallChances[WallIdx]--;
+		WallTemplateIdx = GetRandomTemplateIndex(WallTemplates);
 
-		auto BackWallPos = NextCellCenter;
+		FVector BackWallPos = NextCellCenter;
 		BackWallPos.Y -= CellSize / 2;
-		WallMeshes[x].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], BackWallPos, FRotator::ZeroRotator));
+		WallMeshes[x].Add(GetWorld()->SpawnActor<AActor>(WallTemplates[WallTemplateIdx].ActorClass, BackWallPos, FRotator::ZeroRotator));
 	}
 
-	NextCellCenter = FVector::ZeroVector;
+	NextCellCenter = GetActorLocation();
 	for (int y = 0; y < Width; ++y, NextCellCenter.Y += CellSize)
 	{
-		WallIdx = rand() % WallMeshTemplatesAndChance.Num();
-		while (WallChances[WallIdx] == 0) WallIdx = rand() % WallMeshTemplatesAndChance.Num();
-		WallChances[WallIdx]--;
+		WallTemplateIdx = GetRandomTemplateIndex(WallTemplates);
 
 		auto RightWallPos = NextCellCenter;
 		RightWallPos.X -= CellSize / 2;
-		WallMeshes[y].push_back(GetWorld()->SpawnActor<AActor>(WallTemplates[WallIdx], RightWallPos, LeftWallRot));
+		WallMeshes[y].Add(GetWorld()->SpawnActor<AActor>(WallTemplates[WallTemplateIdx].ActorClass, RightWallPos, LeftWallRot));
 	}
 }
-
 
 FRotator AMazeActor::GetRand4OrientationRotator()
 {
 	FRotator RandRot = FRotator::ZeroRotator;
 
-	int OrientationRand = rand() % 4;
+	int OrientationRand = Random::NextInt(4, 0);// rand() % 4;
 
 	switch (OrientationRand)
 	{
-	/*case 0:
-		RandRot.Yaw += 0;
-		break;*/
+		/*case 0:
+			RandRot.Yaw += 0;
+			break;*/
 	case 1:
 		RandRot.Yaw += 90;
 		break;
@@ -198,4 +153,89 @@ FRotator AMazeActor::GetRand4OrientationRotator()
 		break;
 	}
 	return RandRot;
+}
+
+void AMazeActor::GetDatableTemplatesAndRarity(UDataTable* TemplatesAndRarity, TArray<FActorTemplatesAndRarity>& TemplatesArray)
+{
+	TArray<FActorTemplatesAndRarity> Templates;
+	TemplatesAndRarity->ForeachRow<FActorTemplatesAndRarity>("FillTemplate", [&Templates](const FName& Key, const FActorTemplatesAndRarity& Value)
+		{
+			Templates.Add(Value);
+		});
+	auto floorTemplatesQty = TemplatesAndRarity->GetRowNames().Num();
+	TemplatesArray.Empty(TemplatesAndRarity->GetRowNames().Num());
+	TemplatesArray = Templates;
+}
+
+int32 AMazeActor::GetRandomTemplateIndex(TArray<FActorTemplatesAndRarity> ActorTemplates)
+{
+	int32 RarityGrade = Random::NextInt(100, 1); //(rand() % 100) + 1;
+	EActorTemplatesRarity Rarity;
+	if (RarityGrade < 10) Rarity = EActorTemplatesRarity::Unique;
+	else if (RarityGrade < 25) Rarity = EActorTemplatesRarity::Rare;
+	else if (RarityGrade < 40) Rarity = EActorTemplatesRarity::Uncommon;
+	else Rarity = EActorTemplatesRarity::Common;
+
+	int32 randIdx = 0;
+	TArray<FActorTemplatesAndRarity> FilteredTemplates;
+
+	switch (Rarity)
+	{
+	case EActorTemplatesRarity::Unique:
+		randIdx = Random::NextInt(ActorTemplates.Num(), 0); //rand() % ActorTemplates.Num();
+		while (UniqueSpawned.Contains(ActorTemplates[randIdx].ActorClass))
+		{
+			randIdx = Random::NextInt(ActorTemplates.Num(), 0); //rand() % ActorTemplates.Num();
+		}
+		if (ActorTemplates[randIdx].Rarity == EActorTemplatesRarity::Unique)
+		{
+			UniqueSpawned.Add(ActorTemplates[randIdx].ActorClass);
+		}
+		break;
+
+	case EActorTemplatesRarity::Rare:
+		FilteredTemplates = ActorTemplates.FilterByPredicate(
+			[&](const FActorTemplatesAndRarity& Template)
+			{
+				return Template.Rarity != EActorTemplatesRarity::Unique;
+			});
+
+		randIdx = Random::NextInt(FilteredTemplates.Num(), 0); //rand() % FilteredTemplates.Num();
+		randIdx = ActorTemplates.IndexOfByPredicate(
+			[&](const FActorTemplatesAndRarity& Template)
+			{
+				return Template.ActorClass == FilteredTemplates[randIdx].ActorClass;
+			});
+		break;
+
+	case EActorTemplatesRarity::Uncommon:
+		FilteredTemplates = ActorTemplates.FilterByPredicate(
+			[&](const FActorTemplatesAndRarity& Template)
+			{
+				return Template.Rarity != EActorTemplatesRarity::Unique && Template.Rarity != EActorTemplatesRarity::Rare;
+			});
+		randIdx = Random::NextInt(FilteredTemplates.Num(), 0); //rand() % FilteredTemplates.Num();
+		randIdx = ActorTemplates.IndexOfByPredicate(
+			[&](const FActorTemplatesAndRarity& Template)
+			{
+				return Template.ActorClass == FilteredTemplates[randIdx].ActorClass;
+			});
+		break;
+
+	default: //case EActorTemplatesRarity::Common
+		FilteredTemplates = ActorTemplates.FilterByPredicate(
+			[&](const FActorTemplatesAndRarity& Template)
+			{
+				return Template.Rarity == EActorTemplatesRarity::Common;
+			});
+		randIdx = Random::NextInt(FilteredTemplates.Num(), 0); //rand() % FilteredTemplates.Num();
+		randIdx = ActorTemplates.IndexOfByPredicate(
+			[&](const FActorTemplatesAndRarity& Template)
+			{
+				return Template.ActorClass == FilteredTemplates[randIdx].ActorClass;
+			});
+		break;
+	}
+
+	return randIdx;
 }

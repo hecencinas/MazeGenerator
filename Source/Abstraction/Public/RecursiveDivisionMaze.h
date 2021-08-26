@@ -17,6 +17,7 @@ public:
 protected:
 	virtual void Init(int Width, int Height, bool IsConnected) override;
 
-	virtual void GenerateMaze(std::mt19937& RandomInt, const Point& Origin, const int UsingWidth, const int UsingHeight, bool HorizontalCut);
+	virtual void GenerateMaze(std::mt19937& UsingRandomInt, const Point& Origin, const int UsingWidth, const int UsingHeight, bool HorizontalCut);
 	int Seed;
 };
+

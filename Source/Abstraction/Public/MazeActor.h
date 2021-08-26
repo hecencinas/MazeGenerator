@@ -4,16 +4,37 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Engine/DataTable.h"
 #include "RecursiveDivisionMaze.h"
 #include <vector>
 #include "MazeActor.generated.h"
+
+UENUM(BlueprintType)
+enum class EActorTemplatesRarity : uint8
+{
+	Common     UMETA(DisplayName = "Common"),
+	Uncommon      UMETA(DisplayName = "Uncommon"),
+	Rare   UMETA(DisplayName = "Rare"),
+	Unique   UMETA(DisplayName = "Unique"),
+};
+
+USTRUCT(BlueprintType)
+struct FActorTemplatesAndRarity : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Templates)
+	TEnumAsByte<EActorTemplatesRarity> Rarity;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Templates)
+	TSubclassOf<AActor> ActorClass;
+};
 
 UCLASS()
 class ABSTRACTION_API AMazeActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AMazeActor();
 
@@ -40,15 +61,22 @@ protected:
 	class USceneComponent* RootSceneComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Generator")
-	TMap<TSubclassOf<AActor>, int> FloorMeshTemplatesAndChance;
+	UDataTable* FloorTemplatesAndRarity;
 	UPROPERTY(EditAnywhere, Category = "Generator")
-	TMap<TSubclassOf<AActor>, int> WallMeshTemplatesAndChance;
+	UDataTable* WallTemplatesAndRarity;
 	UPROPERTY(EditAnywhere, Category = "Generator")
-	TMap<TSubclassOf<AActor>, int> DoorFramedWallMeshTemplatesAndChance;
+	UDataTable* DoorTemplatesAndRarity;
 
-	std::vector<std::vector<AActor*>> FloorMeshes;
-	std::vector<std::vector<AActor*>> WallMeshes;
+	TArray<FActorTemplatesAndRarity> FloorTemplates;
+	TArray<FActorTemplatesAndRarity> WallTemplates;
+	TArray<FActorTemplatesAndRarity> DoorTemplates;
+
+	TArray<TArray<AActor*>> FloorMeshes;
+	TArray<TArray<AActor*>> WallMeshes;
+
+	TArray<TSubclassOf<AActor>> UniqueSpawned;
 
 	FRotator GetRand4OrientationRotator();
-
+	void GetDatableTemplatesAndRarity(UDataTable* TemplatesAndRarity, TArray<FActorTemplatesAndRarity>& TemplatesArray);
+	int32 GetRandomTemplateIndex(TArray<FActorTemplatesAndRarity> ActorTemplates);
 };
