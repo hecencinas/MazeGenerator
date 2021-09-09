@@ -40,13 +40,9 @@ void UHealthComponent::CallWidgetUpdateHealth()
 {
 	if (HealthWidgetClass)
 	{
-		try
-		{
 			FOutputDeviceNull OutputDeviceNull;
 
 			const FString CmdAndParams = FString::Printf(TEXT("UpdateHealth %.2f %.2f"), CurrentHealth, MaxHealth); //update health
 			HealthWidget->CallFunctionByNameWithArguments(*CmdAndParams, OutputDeviceNull, nullptr, true);
-		}
-		catch (...) {}
 	}
 }

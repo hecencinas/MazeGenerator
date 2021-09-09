@@ -12,10 +12,10 @@
 class ABSTRACTION_API RecursiveDivisionMaze : public Grid
 {
 public:
-	RecursiveDivisionMaze(int Width, int Height, bool IsConnected = true, int Seed = 0) : Grid(Width, Height, IsConnected), Seed(Seed) { Init(Width, Height, IsConnected); }
+	RecursiveDivisionMaze(int Width, int Height, bool IsConnected = true, int Seed = 0) : Grid(Width, Height, IsConnected, true), Seed(Seed) { Init(Width, Height, IsConnected, true); }
 
 protected:
-	virtual void Init(int Width, int Height, bool IsConnected) override;
+	virtual void Init(int Width, int Height, bool IsConnected, bool InitAsMaze) override;
 
 	virtual void GenerateMaze(std::mt19937& UsingRandomInt, const Point& Origin, const int UsingWidth, const int UsingHeight, bool HorizontalCut);
 	int Seed;
